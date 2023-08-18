@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Observable, map, of, tap } from 'rxjs';
+import { Observable, combineLatest, map, of, tap } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 
 import { Country, Region, SmallCountry } from '../interfaces/country.interfaces';
@@ -36,8 +36,6 @@ export class CountriesService {
   }
 
   getCountryByAlphaCode( alphaCode: string): Observable<SmallCountry> {
-
-    console.log({alphaCode})
     const url: string = `${this.baseUrl}/alpha/${alphaCode}?fields=cca3,name,borders`
 
     return this.http.get<Country>(url).pipe(
@@ -48,4 +46,19 @@ export class CountriesService {
       }))
     )
   }
+
+  getCountryBordersByCodes( borders:string[] ):Observable<SmallCountry[]> {
+    if ( !borders || borders.length === 0 ) return of ([]);
+
+    const countriesRequests: Observable<SmallCountry>[] = [];
+
+    borders.forEach( code => {
+      const request = this.getCountryByAlphaCode( code );
+      countriesRequests.push(request);
+    });
+
+
+    return combineLatest( countriesRequests )
+  }
+
 }
